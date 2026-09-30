@@ -1,0 +1,756 @@
+# Weighted Temperament Assessment
+## Product Specification v0.2
+
+**Status:** DESIGN DRAFT / NON-AUTHORITATIVE
+**Verified against live NewYou authority:** 2026-09-29
+**Implementation authority:** None
+**Future home if adopted:** Temperament Domain / FP-003 governed planning
+
+---
+
+# 1. Product intent
+
+The product is a digital temperament assessment capable of supporting:
+
+- the existing book-faithful Four-Colour assessment;
+- deterministic weighted scoring;
+- future differentiated question and answer weights;
+- multiple temperament contributions from one response;
+- mixed question formats;
+- randomised presentation;
+- immutable methodology versions;
+- exact result reproduction;
+- primary and secondary temperament interpretation;
+- governed tie resolution;
+- explainable scoring.
+
+The system should be sophisticated enough to support future methodology improvements without requiring a replacement scoring architecture.
+
+At the same time, the product must remain understandable to the participant.
+
+The participant should experience:
+
+```text
+simple questions
+→ simple choices
+→ clear progress
+→ trustworthy result
+```
+
+while the underlying system preserves:
+
+```text
+methodology version
++ stable question identities
++ stable response identities
++ scoring weights
++ contribution vectors
++ presentation permutation
++ exact calculation trace
+```
+
+---
+
+# 2. Current authority boundary
+
+Current Product Law requires the launch assessment to be a faithful, versioned digital representation of the approved book assessment.
+
+Current launch scoring remains:
+
+```text
+equal weighting
++
+one selected answer contributes one point
+to its assigned colour
+```
+
+Current Product Law already permits future methodology versions to define:
+
+- question weights;
+- answer-option weights;
+- multiple colour contributions;
+- approved tie-break questions;
+- score-distance thresholds.
+
+Therefore:
+
+```text
+SCORING ENGINE
+= weighted-capable from day one
+
+LAUNCH METHODOLOGY
+= equal-weight configuration
+```
+
+These are not contradictory.
+
+The engine is more general than the first approved methodology.
+
+---
+
+# 3. Current development status
+
+This document does not authorise implementation in the canonical NewYou application.
+
+Live governance currently states:
+
+```text
+EXECUTABLE DEVELOPMENT
+= BLOCKED UNTIL PHASE 8 ENTRY CONDITIONS PASS
+```
+
+This design may therefore be used for:
+
+- methodology research;
+- specification;
+- synthetic examples;
+- mathematical modelling;
+- test-case design;
+- disposable/non-canonical experimentation.
+
+It must not silently become implemented NewYou authority.
+
+---
+
+# 4. Product principles
+
+## 4.1 Methodology is versioned
+
+A completed result must always be associated with the exact methodology version that produced it.
+
+A later methodology version must never silently alter an earlier result.
+
+## 4.2 Scoring is deterministic
+
+Given:
+
+```text
+same methodology version
++
+same semantic answers
+```
+
+the result must always be identical.
+
+## 4.3 Presentation is not scoring
+
+Question order and answer order may change.
+
+Their meaning must not.
+
+```text
+stable ID
+≠
+screen position
+```
+
+## 4.4 Weighting is explicit
+
+Nothing receives extra influence merely because of code structure or UI position.
+
+All weighting comes from the approved methodology definition.
+
+## 4.5 Ties remain real
+
+An exact tie must never be resolved by:
+
+- database order;
+- map order;
+- colour declaration order;
+- UI position;
+- random choice.
+
+## 4.6 Explainability is mandatory
+
+Every score must be reconstructible from the participant's submitted answers and the applicable methodology.
+
+## 4.7 Complexity requires methodology justification
+
+The engine may support advanced weighting.
+
+That does not mean the methodology should use every available feature.
+
+---
+
+# 5. Supported question formats
+
+The proposed future methodology supports two scored question formats.
+
+## 5.1 Four-way forced choice
+
+The participant chooses the one option that best represents them.
+
+Example structure:
+
+```text
+Question
+
+Option A
+Option B
+Option C
+Option D
+```
+
+Properties:
+
+```text
+one response required
+question order shuffled
+answer order shuffled
+```
+
+The visible answer position carries no scoring meaning.
+
+## 5.2 Four-point agreement scale
+
+The participant reacts to a statement using:
+
+```text
+Strongly Disagree
+Disagree
+Agree
+Strongly Agree
+```
+
+Properties:
+
+```text
+one response required
+question order shuffled
+answer order NOT shuffled
+```
+
+Agreement options have an inherent ordinal relationship and remain in a stable sequence.
+
+---
+
+# 6. Mixed-format assessment
+
+The future methodology may contain both formats in one participant experience.
+
+Example:
+
+```text
+Forced choice
+Agreement
+Forced choice
+Forced choice
+Agreement
+...
+```
+
+The participant does not need to see artificial sections such as:
+
+```text
+PART A
+PART B
+```
+
+unless later UX evidence shows that segmentation improves comprehension or completion.
+
+Internally, however, the methodology retains the distinction.
+
+---
+
+# 7. Presentation randomisation
+
+Every digital attempt receives its own presentation ordering.
+
+The proposed presentation generator independently randomises:
+
+1. the complete question order; and
+2. the answer order of every forced-choice question.
+
+Agreement-scale response ordering remains fixed.
+
+Example:
+
+```text
+Participant A
+
+Q17
+Q04
+Q22
+Q01
+...
+
+Participant B
+
+Q08
+Q19
+Q03
+Q24
+...
+```
+
+For a forced-choice question:
+
+```text
+Participant A:
+C, A, D, B
+
+Participant B:
+B, D, A, C
+```
+
+The semantic response remains the stable response ID.
+
+---
+
+# 8. Randomisation stability
+
+Randomisation occurs once per attempt.
+
+It must not occur:
+
+- on page refresh;
+- after reconnect;
+- after navigating backwards;
+- on save/resume;
+- after login on another device;
+- after changing language.
+
+Therefore:
+
+```text
+attempt created
+→ presentation generated
+→ presentation fixed
+→ participant may leave
+→ participant resumes
+→ identical presentation restored
+```
+
+---
+
+# 9. Randomisation purpose
+
+Randomisation aims to:
+
+- reduce simple side-by-side copying;
+- make memorising position-based answers harder;
+- eliminate the book's visible number-to-colour association;
+- reduce position habits;
+- prevent "`Question 7, answer 2`" from having stable cross-user meaning.
+
+Randomisation is not positioned as a complete anti-cheating mechanism.
+
+---
+
+# 10. Participant-facing numbering
+
+Participant numbering reflects progress:
+
+```text
+Question 7 of 45
+```
+
+not methodology identity.
+
+An internal item might be:
+
+```text
+ag_b04
+```
+
+while appearing as:
+
+```text
+Question 7 of 45
+```
+
+for one participant and:
+
+```text
+Question 31 of 45
+```
+
+for another.
+
+---
+
+# 11. Scoring model
+
+The engine is weighted by construction.
+
+For question `q`, selected response `r`, dimension `d`:
+
+```text
+effective contribution
+=
+question weight
+×
+response contribution to dimension d
+```
+
+Final dimension score:
+
+```text
+score(d)
+=
+sum of all effective contributions to d
+```
+
+---
+
+# 12. Equal-weight launch compatibility
+
+The currently governed book-faithful scoring is represented as:
+
+```text
+question weight = 1
+```
+
+and:
+
+```text
+selected response
+→ exactly one colour receives 1
+→ other colours receive 0
+```
+
+Therefore the weighted engine exactly reproduces the current count-based assessment.
+
+---
+
+# 13. Multi-colour contributions
+
+Future approved methodologies may allow one response to contribute to several dimensions.
+
+Example:
+
+```text
+response contribution:
+
+yellow = 3
+red    = 1
+green  = 0
+blue   = 0
+```
+
+This capability exists in the engine.
+
+It should only be used when methodology authority explicitly approves the meaning.
+
+---
+
+# 14. Agreement response intensity
+
+A research agreement scale may initially use:
+
+```text
+Strongly Disagree = 0
+Disagree          = 1
+Agree             = 2
+Strongly Agree    = 3
+```
+
+This is not globally hard-coded temperament logic.
+
+Each item explicitly defines what each response contributes.
+
+---
+
+# 15. Evidence channels
+
+The future mixed methodology should preserve two independent evidence channels.
+
+## Channel A — Forced choice
+
+```text
+FC.yellow
+FC.red
+FC.green
+FC.blue
+```
+
+## Channel B — Agreement scale
+
+```text
+AG.yellow
+AG.red
+AG.green
+AG.blue
+```
+
+During methodology development these channels must remain separately inspectable.
+
+---
+
+# 16. Composite scoring
+
+The initial research methodology must **not** blindly calculate:
+
+```text
+final yellow
+=
+FC.yellow + AG.yellow
+```
+
+The two question formats produce structurally different evidence.
+
+Instead the research result should retain:
+
+```text
+Yellow
+├── forced-choice evidence
+└── agreement evidence
+```
+
+Only after calibration may a future methodology define a justified composite rule.
+
+---
+
+# 17. Weight hierarchy
+
+The product model must be able to distinguish:
+
+```text
+response intensity
+question/item weight
+dimension contribution
+channel weight
+```
+
+These are separate concepts.
+
+For example:
+
+```text
+response intensity = 3
+item weight        = 2
+dimension mapping  = blue
+channel weight     = future methodology concern
+```
+
+---
+
+# 18. Initial weight policy
+
+Although the engine supports weights, the first research methodology should begin with:
+
+```text
+all item weights = 1
+```
+
+Weights should not be assigned based on intuition such as:
+
+> "This question feels more important."
+
+Future differentiated weights require explicit methodology justification.
+
+---
+
+# 19. Result model
+
+The scoring output must preserve:
+
+- methodology ID;
+- methodology version;
+- exact scores;
+- per-channel scores where applicable;
+- ranking groups;
+- exact ties;
+- contribution trace.
+
+Example:
+
+```text
+Yellow  38
+Red     32
+Blue    32
+Green   24
+```
+
+Ranking:
+
+```text
+[
+  [yellow],
+  [red, blue],
+  [green]
+]
+```
+
+The result must not convert the Red/Blue tie into an arbitrary order.
+
+---
+
+# 20. Primary and secondary result
+
+Where the ranking is unambiguous:
+
+```text
+highest
+→ primary
+
+second-highest
+→ secondary
+```
+
+Current Product Law already governs exact-tie handling separately.
+
+The scoring engine detects the factual tie.
+
+The approved methodology determines how it may be resolved.
+
+---
+
+# 21. Tie workflow boundary
+
+Current Product Law specifies:
+
+```text
+initial score
+→ exact tie
+→ approved tie-break questions
+→ approved high-value rules
+→ unresolved equal mixed result
+→ optional participant preference
+→ exceptional review where required
+```
+
+The scoring engine must never invent tie-breaking logic outside the approved methodology.
+
+---
+
+# 22. Result immutability
+
+Once a digital assessment is submitted:
+
+```text
+submitted answers
+calculated scores
+methodology version
+```
+
+are immutable under current Product Law.
+
+A later interpretation or current-profile decision must not overwrite that raw result.
+
+---
+
+# 23. Question completeness
+
+Every scored question is required before submission.
+
+The scorer does not generate authoritative partial results from an incomplete submitted assessment.
+
+Save/resume may preserve partial answers, but final scoring occurs only against a valid complete submission.
+
+---
+
+# 24. Bilingual behaviour
+
+Afrikaans and English presentation of the same methodology item should normally share:
+
+- question ID;
+- response IDs;
+- response type;
+- scoring weights;
+- contribution vectors;
+- presentation permutation.
+
+Only approved localised content changes.
+
+Switching language during an active attempt must not reshuffle the assessment.
+
+---
+
+# 25. Accessibility
+
+Randomisation must be reflected in actual semantic/rendered order.
+
+Do not visually reorder content through CSS while exposing a different order to:
+
+- keyboard users;
+- screen readers;
+- assistive technology.
+
+---
+
+# 26. Product non-goals
+
+The scoring engine/product specification does not decide:
+
+- who may approve methodology;
+- whether someone is entitled to start;
+- payment;
+- credit consumption;
+- persistence architecture;
+- report prose;
+- clinical conclusions;
+- medical diagnosis;
+- current-profile selection;
+- retention/deletion policy;
+- methodology IP rights.
+
+Those remain governed elsewhere.
+
+---
+
+# 27. Success criteria
+
+The product design succeeds when it can support:
+
+```text
+book-faithful equal scoring
++
+future weighted scoring
++
+forced-choice questions
++
+agreement questions
++
+question randomisation
++
+forced-choice answer randomisation
++
+stable save/resume presentation
++
+multi-colour contributions
++
+explicit ties
++
+explainable results
++
+versioned methodology
+```
+
+without creating separate scoring engines for each mode.
+
+---
+
+# 28. Product acceptance principles
+
+A future implementation must prove:
+
+1. Book scoring can be reproduced exactly.
+2. Randomisation cannot alter a result.
+3. Agreement response order remains fixed.
+4. Forced-choice answer positions carry no semantic meaning.
+5. Same semantic answers always produce the same score.
+6. Historical methodology results remain reproducible.
+7. Exact ties are preserved.
+8. Invalid input fails closed.
+9. Score construction is explainable.
+10. New methodology versions cannot silently reinterpret old submissions.
+
+---
+
+# 29. Open methodology decisions
+
+Still intentionally unresolved:
+
+- final number of agreement items;
+- approved wording of new items;
+- differentiated question weights;
+- answer-option weights beyond baseline;
+- multi-colour mappings;
+- channel weighting;
+- normalisation;
+- score-distance thresholds;
+- final tie-break items/rules;
+- psychometric validation threshold for adopting a new methodology.
+
+Those belong to methodology development, not engineering guesswork.
