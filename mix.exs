@@ -3,7 +3,7 @@ defmodule TemperamentEngineLab.MixProject do
 
   def project do
     [
-      app: :temperament_engine_lab,
+      app: :temperament_engine,
       version: "0.1.0",
       elixir: "~> 1.20",
       start_permanent: Mix.env() == :prod,
