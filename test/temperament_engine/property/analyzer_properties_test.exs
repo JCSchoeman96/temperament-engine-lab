@@ -164,19 +164,19 @@ defmodule TemperamentEngine.Property.AnalyzerPropertiesTest do
     check all(methodology <- Generators.methodologies(), max_runs: 300) do
       assert {:ok, analysis} = Analyzer.analyze(methodology)
 
-      for {channel, channel_analysis} <- analysis.by_channel,
-          dimension <- methodology.dimensions do
-        warning_path =
+      expected_paths =
+        for {channel, channel_analysis} <- analysis.by_channel,
+            dimension <- methodology.dimensions,
+            channel_analysis.marginal_maximum_by_dimension[dimension] == 0 do
           [:by_channel, channel, :marginal_maximum_by_dimension, dimension]
+        end
 
-        warning_exists? =
-          Enum.any?(analysis.warnings, fn warning ->
-            warning.code == :zero_score_opportunity and warning.path == warning_path
-          end)
+      actual_paths =
+        analysis.warnings
+        |> Enum.filter(&(&1.code == :zero_score_opportunity))
+        |> Enum.map(& &1.path)
 
-        assert warning_exists? ==
-                 (channel_analysis.marginal_maximum_by_dimension[dimension] == 0)
-      end
+      assert Enum.sort(actual_paths) == Enum.sort(expected_paths)
     end
   end
 
