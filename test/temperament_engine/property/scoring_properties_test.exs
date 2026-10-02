@@ -1,6 +1,7 @@
 defmodule TemperamentEngine.Property.ScoringPropertiesTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
+  import StreamData
 
   alias TemperamentEngine.Generators
   alias TemperamentEngine.Methodology.Analyzer
@@ -13,6 +14,61 @@ defmodule TemperamentEngine.Property.ScoringPropertiesTest do
           ) do
       assert :ok == TemperamentEngine.validate_methodology(methodology)
       assert {:ok, _result} = TemperamentEngine.score(methodology, answers)
+    end
+  end
+
+  property "repeated generated scoring returns the same complete result" do
+    check all(
+            methodology <- Generators.methodologies(),
+            answers <- Generators.answers_for(methodology),
+            max_runs: 300
+          ) do
+      assert {:ok, first_result} = TemperamentEngine.score(methodology, answers)
+      assert {:ok, second_result} = TemperamentEngine.score(methodology, answers)
+      assert second_result == first_result
+    end
+  end
+
+  property "answer maps built in different insertion orders score identically" do
+    check all(
+            methodology <- Generators.methodologies(),
+            answers <- Generators.answers_for(methodology),
+            max_runs: 300
+          ) do
+      entries = Map.to_list(answers)
+      forward = Map.new(entries)
+      reverse = Map.new(Enum.reverse(entries))
+
+      assert forward == reverse
+      assert {:ok, forward_result} = TemperamentEngine.score(methodology, forward)
+      assert {:ok, reverse_result} = TemperamentEngine.score(methodology, reverse)
+      assert forward_result == reverse_result
+    end
+  end
+
+  property "common positive weight scaling preserves ranking places and ties" do
+    check all(
+            methodology <- Generators.ranked_methodologies(),
+            answers <- Generators.answers_for(methodology),
+            scale <- integer(1..10),
+            max_runs: 300
+          ) do
+      scaled = %{
+        methodology
+        | questions: Enum.map(methodology.questions, &%{&1 | weight: &1.weight * scale})
+      }
+
+      assert {:ok, original_result} = TemperamentEngine.score(methodology, answers)
+      assert {:ok, scaled_result} = TemperamentEngine.score(scaled, answers)
+
+      assert ranking_shape(scaled_result.ranking) == ranking_shape(original_result.ranking)
+
+      assert scaled_result.ranking_scores ==
+               Map.new(original_result.ranking_scores, fn {dimension, score} ->
+                 {dimension, score * scale}
+               end)
+
+      assert scaled_result.top_tie? == original_result.top_tie?
     end
   end
 
@@ -169,4 +225,8 @@ defmodule TemperamentEngine.Property.ScoringPropertiesTest do
 
   defp channel_for_type(:forced_choice), do: :forced_choice
   defp channel_for_type(:agreement_scale), do: :agreement_scale
+
+  defp ranking_shape(groups) do
+    Enum.map(groups, fn group -> %{place: group.place, dimensions: group.dimensions} end)
+  end
 end
