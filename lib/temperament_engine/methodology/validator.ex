@@ -7,6 +7,7 @@ defmodule TemperamentEngine.Methodology.Validator do
   alias TemperamentEngine.ValidationError
 
   @question_types [:forced_choice, :agreement_scale]
+  @machine_identifier_regex ~r/\A[A-Za-z0-9][A-Za-z0-9._-]*\z/
 
   @spec validate(term()) :: :ok | {:error, [ValidationError.t()]}
   def validate(%Methodology{} = methodology) do
@@ -33,7 +34,13 @@ defmodule TemperamentEngine.Methodology.Validator do
     if valid_identifier?(value) do
       []
     else
-      [error(:invalid_identifier, path, "Expected a non-empty UTF-8 binary identifier.")]
+      [
+        error(
+          :invalid_identifier,
+          path,
+          "Expected an ASCII machine identifier matching [A-Za-z0-9][A-Za-z0-9._-]*."
+        )
+      ]
     end
   end
 
@@ -57,7 +64,7 @@ defmodule TemperamentEngine.Methodology.Validator do
                error(
                  :invalid_identifier,
                  [:dimensions, index],
-                 "Expected a non-empty UTF-8 binary dimension identifier."
+                 "Expected an ASCII machine identifier matching [A-Za-z0-9][A-Za-z0-9._-]*."
                )
              ], valid}
         end
@@ -282,7 +289,7 @@ defmodule TemperamentEngine.Methodology.Validator do
   end
 
   defp valid_identifier?(value) when is_binary(value) do
-    String.valid?(value) and String.trim(value) != ""
+    String.valid?(value) and Regex.match?(@machine_identifier_regex, value)
   end
 
   defp valid_identifier?(_value), do: false

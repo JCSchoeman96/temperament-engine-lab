@@ -20,7 +20,13 @@ defmodule TemperamentEngine.ScorerTest do
            }
 
     assert result.ranking_scores == %{"yellow" => 4, "red" => 8, "green" => 0, "blue" => 0}
-    assert result.ranking == [["red"], ["yellow"], ["green", "blue"]]
+
+    assert result.ranking == [
+             %{place: 1, score: 8, dimensions: ["red"]},
+             %{place: 2, score: 4, dimensions: ["yellow"]},
+             %{place: 3, score: 0, dimensions: ["green", "blue"]}
+           ]
+
     assert result.top_tie? == false
 
     assert Enum.map(result.trace, & &1.question_id) == Enum.map(methodology.questions, & &1.id)
@@ -63,7 +69,12 @@ defmodule TemperamentEngine.ScorerTest do
 
     assert {:ok, result} = Scorer.score(methodology, answers)
     assert result.ranking_scores == %{"yellow" => 2, "red" => 2, "green" => 1, "blue" => 1}
-    assert result.ranking == [["yellow", "red"], ["green", "blue"]]
+
+    assert result.ranking == [
+             %{place: 1, score: 2, dimensions: ["yellow", "red"]},
+             %{place: 3, score: 1, dimensions: ["green", "blue"]}
+           ]
+
     assert result.top_tie? == true
   end
 

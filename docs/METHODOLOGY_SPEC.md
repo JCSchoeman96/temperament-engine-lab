@@ -46,7 +46,11 @@ The result retains channel scores separately. No channel weights, normalization,
 
 ## Opportunity analysis
 
-For each question and dimension, the analyzer evaluates all valid responses, treats omissions as zero, applies the question weight, and adds the per-question minimum and maximum. Different maximum opportunity across dimensions is reported as a warning for research review; it does not change the score.
+For each question and dimension, the analyzer evaluates all valid responses, treats omissions as zero, applies the question weight, and adds the per-question minimum and maximum within that question's channel. Analysis exposes only `by_channel`, with `marginal_minimum_by_dimension` and `marginal_maximum_by_dimension` fields. A dimension's maximum can come from a different response than another dimension's maximum, so the map does not promise one jointly reachable score vector. Different marginal maximum opportunities across dimensions are reported as channel-scoped warnings for research review; they do not change the score.
+
+## Ranking result
+
+When enabled, ranking groups include `place`, exact `score`, and tied `dimensions`. Places use competition ranking: a tie occupying first and second place is followed by place `3`. Equal scores remain tied, and methodology dimension order only controls the order of members within a group.
 
 ## Research limitations
 

@@ -7,6 +7,7 @@ defmodule TemperamentEngine.Scoring.Scorer do
   alias TemperamentEngine.TraceEntry
   alias TemperamentEngine.ValidationError
 
+  @spec score(term(), term()) :: {:ok, Result.t()} | {:error, [ValidationError.t()]}
   def score(methodology, answers) do
     with :ok <- MethodologyValidator.validate(methodology),
          :ok <- validate_answers(methodology, answers) do

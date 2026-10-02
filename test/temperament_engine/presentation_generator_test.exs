@@ -33,4 +33,11 @@ defmodule TemperamentEngine.PresentationGeneratorTest do
     assert {:error, errors} = Generator.generate(invalid)
     assert Enum.any?(errors, &(&1.code == :missing_questions))
   end
+
+  test "rejects a shuffle function that returns an invalid presentation order" do
+    methodology = Fixtures.mixed_methodology()
+
+    assert {:error, errors} = Generator.generate(methodology, fn _items -> [] end)
+    assert Enum.any?(errors, &(&1.code == :missing_question))
+  end
 end

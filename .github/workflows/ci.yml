@@ -26,6 +26,6 @@ jobs:
       - run: mix deps.get
       - run: mix format --check-formatted
       - run: mix compile --warnings-as-errors
-      - run: mix test
+      - run: MIX_ENV=test mix do compile --warnings-as-errors + test --warnings-as-errors
       - run: mix run examples/baseline_demo.exs
       - run: mix run examples/mixed_format_demo.exs
