@@ -2,6 +2,7 @@ defmodule TemperamentEngine.BaselineCompatibilityTest do
   use ExUnit.Case, async: true
 
   alias TemperamentEngine.Fixtures
+  alias TemperamentEngine.Methodology.Analyzer
 
   test "baseline fixture is 25 synthetic one-hot forced-choice questions at weight one" do
     methodology = Fixtures.baseline_methodology()
@@ -43,5 +44,36 @@ defmodule TemperamentEngine.BaselineCompatibilityTest do
     assert result.ranking_scores == expected_scores
     assert result.channel_scores == %{forced_choice: expected_scores}
     assert Enum.sum(Map.values(result.ranking_scores)) == 25
+  end
+
+  test "baseline analyzer reports four scoring vectors and one point of question swing" do
+    methodology = Fixtures.baseline_methodology()
+
+    assert {:ok, analysis} = Analyzer.analyze(methodology)
+
+    for question <- methodology.questions do
+      diagnostic = analysis.by_question[question.id]
+
+      assert question.weight == 1
+      assert length(question.responses) == 4
+      assert diagnostic.response_count == 4
+      assert diagnostic.distinct_scoring_vector_count == 4
+      assert diagnostic.duplicate_scoring_vector_groups == []
+      refute diagnostic.non_discriminating?
+
+      assert diagnostic.marginal_swing_by_dimension == %{
+               "yellow" => 1,
+               "red" => 1,
+               "green" => 1,
+               "blue" => 1
+             }
+    end
+
+    assert analysis.by_channel.forced_choice.maximum_single_question_swing_by_dimension == %{
+             "yellow" => 1,
+             "red" => 1,
+             "green" => 1,
+             "blue" => 1
+           }
   end
 end
