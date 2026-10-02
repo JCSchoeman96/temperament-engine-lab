@@ -46,7 +46,11 @@ The result retains channel scores separately. No channel weights, normalization,
 
 ## Opportunity analysis
 
-For each question and dimension, the analyzer evaluates all valid responses, treats omissions as zero, applies the question weight, and adds the per-question minimum and maximum within that question's channel. Analysis exposes only `by_channel`, with `marginal_minimum_by_dimension` and `marginal_maximum_by_dimension` fields. A dimension's maximum can come from a different response than another dimension's maximum, so the map does not promise one jointly reachable score vector. Different marginal maximum opportunities across dimensions are reported as channel-scoped warnings for research review; they do not change the score.
+For each question and declared dimension, the analyzer evaluates every valid response, treats omissions as zero, applies question weight, and reports the marginal minimum, maximum, and swing. It also compares each response's complete weighted vector across all declared dimensions. Sparse and explicit-zero contribution maps therefore have the same scoring meaning. Per-question diagnostics include response count, distinct vector count, groups of responses with identical scoring vectors, and `non_discriminating?`, which is true exactly when all responses produce one distinct vector. This also applies to a question with one response.
+
+Within each channel, minimums and maximums are summed across questions, while `maximum_single_question_swing_by_dimension` is the largest individual question swing for each dimension. A dimension's maximum can come from a different response than another dimension's maximum, so marginal extrema do not promise one jointly reachable score vector. `:unequal_maximum_opportunity` remains channel-scoped; `:zero_score_opportunity` identifies a channel and dimension whose maximum is zero. Warning `code` and `path` are the machine-facing contract; detail text is explanatory.
+
+These diagnostics are mathematical and structural observations only. They apply no thresholds and do not determine whether a methodology is approved or psychologically or clinically appropriate. They do not change scoring arithmetic, channel separation, or the score result.
 
 ## Ranking result
 

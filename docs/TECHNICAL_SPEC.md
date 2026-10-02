@@ -48,7 +48,11 @@ Ranking groups dimensions by descending score. Each group includes its competiti
 
 ## Analysis
 
-The analyzer calculates each question's minimum and maximum weighted contribution for each dimension, then sums those opportunities within each channel. It returns `by_channel` ranges named `marginal_minimum_by_dimension` and `marginal_maximum_by_dimension`; there is no all-channel aggregate. Extrema are marginal, so maxima for different dimensions can come from different answers and need not form one reachable score vector. Unequal maximum opportunities produce structured, channel-scoped warnings. Analysis does not modify scorer behavior or create a composite result.
+`Methodology.Analysis` uses ordinary maps for channel and question diagnostics. For each question it creates a complete weighted response vector over all declared dimensions; omitted contributions are zero. It reports marginal minimum, maximum, and swing maps, response count, distinct vector count, duplicate vector groups, and whether the question has exactly one distinct vector. Duplicate groups preserve response declaration order internally.
+
+For each channel, marginal minimum and maximum maps sum the per-question extrema, while `maximum_single_question_swing_by_dimension` takes the maximum individual swing for each dimension. There is no all-channel aggregate. Extrema are marginal, so maxima for different dimensions can come from different answers and need not form one reachable score vector. Structured warnings use `code` and `path`: unequal maximum opportunity identifies a channel, and zero score opportunity identifies the exact channel and dimension with maximum zero. Detail is explanatory prose and is not required for machine interpretation.
+
+Analysis provides mathematical and structural observations only. It applies no thresholds and does not decide methodology approval or psychological or clinical quality. It does not modify scorer behavior or create a composite result.
 
 ## Randomization
 
