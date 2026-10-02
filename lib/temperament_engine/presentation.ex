@@ -5,4 +5,11 @@ defmodule TemperamentEngine.Presentation do
             methodology_version: nil,
             question_order: [],
             response_order: %{}
+
+  @type t :: %__MODULE__{
+          methodology_id: String.t() | nil,
+          methodology_version: String.t() | nil,
+          question_order: [String.t()],
+          response_order: %{optional(String.t()) => [String.t()]}
+        }
 end

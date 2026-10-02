@@ -4,8 +4,9 @@ defmodule TemperamentEngine.Methodology.Analyzer do
   alias TemperamentEngine.Methodology
   alias TemperamentEngine.Methodology.Analysis
   alias TemperamentEngine.Methodology.Validator
+  alias TemperamentEngine.ValidationError
 
-  @spec analyze(term()) :: {:ok, Analysis.t()} | {:error, list()}
+  @spec analyze(term()) :: {:ok, Analysis.t()} | {:error, [ValidationError.t()]}
   def analyze(methodology) do
     with :ok <- Validator.validate(methodology) do
       {:ok, calculate(methodology)}
@@ -13,8 +14,6 @@ defmodule TemperamentEngine.Methodology.Analyzer do
   end
 
   defp calculate(%Methodology{} = methodology) do
-    overall = empty_range(methodology.dimensions)
-
     channels =
       methodology.questions
       |> Enum.map(&channel_for_type(&1.type))
@@ -22,35 +21,25 @@ defmodule TemperamentEngine.Methodology.Analyzer do
 
     channel_ranges = Map.new(channels, &{&1, empty_range(methodology.dimensions)})
 
-    {overall, channel_ranges} =
-      Enum.reduce(methodology.questions, {overall, channel_ranges}, fn question,
-                                                                       {totals, by_channel} ->
+    channel_ranges =
+      Enum.reduce(methodology.questions, channel_ranges, fn question, by_channel ->
         channel = channel_for_type(question.type)
         question_range = question_range(question, methodology.dimensions)
-        next_totals = add_ranges(totals, question_range)
-        next_channel = add_ranges(Map.fetch!(by_channel, channel), question_range)
-        {next_totals, Map.put(by_channel, channel, next_channel)}
+        Map.update!(by_channel, channel, &add_ranges(&1, question_range))
       end)
 
     warnings =
-      unequal_opportunity_warnings(
-        overall.maximum_by_dimension,
-        [:maximum_by_dimension],
-        :all_channels
-      ) ++
-        Enum.flat_map(channels, fn channel ->
-          range = Map.fetch!(channel_ranges, channel)
+      Enum.flat_map(channels, fn channel ->
+        range = Map.fetch!(channel_ranges, channel)
 
-          unequal_opportunity_warnings(
-            range.maximum_by_dimension,
-            [:by_channel, channel, :maximum_by_dimension],
-            channel
-          )
-        end)
+        unequal_opportunity_warnings(
+          range.marginal_maximum_by_dimension,
+          [:by_channel, channel, :marginal_maximum_by_dimension],
+          channel
+        )
+      end)
 
     %Analysis{
-      minimum_by_dimension: overall.minimum_by_dimension,
-      maximum_by_dimension: overall.maximum_by_dimension,
       by_channel: channel_ranges,
       warnings: warnings
     }
@@ -68,27 +57,31 @@ defmodule TemperamentEngine.Methodology.Analyzer do
       end)
 
     %{
-      minimum_by_dimension:
+      marginal_minimum_by_dimension:
         Map.new(per_dimension, fn {dimension, {minimum, _}} -> {dimension, minimum} end),
-      maximum_by_dimension:
+      marginal_maximum_by_dimension:
         Map.new(per_dimension, fn {dimension, {_, maximum}} -> {dimension, maximum} end)
     }
   end
 
   defp empty_range(dimensions) do
     zeroes = Map.new(dimensions, &{&1, 0})
-    %{minimum_by_dimension: zeroes, maximum_by_dimension: zeroes}
+
+    %{
+      marginal_minimum_by_dimension: zeroes,
+      marginal_maximum_by_dimension: zeroes
+    }
   end
 
   defp add_ranges(left, right) do
     %{
-      minimum_by_dimension:
-        Map.new(left.minimum_by_dimension, fn {dimension, value} ->
-          {dimension, value + Map.fetch!(right.minimum_by_dimension, dimension)}
+      marginal_minimum_by_dimension:
+        Map.new(left.marginal_minimum_by_dimension, fn {dimension, value} ->
+          {dimension, value + Map.fetch!(right.marginal_minimum_by_dimension, dimension)}
         end),
-      maximum_by_dimension:
-        Map.new(left.maximum_by_dimension, fn {dimension, value} ->
-          {dimension, value + Map.fetch!(right.maximum_by_dimension, dimension)}
+      marginal_maximum_by_dimension:
+        Map.new(left.marginal_maximum_by_dimension, fn {dimension, value} ->
+          {dimension, value + Map.fetch!(right.marginal_maximum_by_dimension, dimension)}
         end)
     }
   end

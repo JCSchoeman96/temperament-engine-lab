@@ -70,6 +70,55 @@ defmodule TemperamentEngine.MethodologyValidatorTest do
     assert Enum.any?(errors, &(&1.path == [:id]))
   end
 
+  test "accepts conservative ASCII machine identifiers" do
+    methodology = Fixtures.baseline_methodology()
+    [question | remaining] = methodology.questions
+    [response | other_responses] = question.responses
+
+    valid = %{
+      methodology
+      | id: "research.v1-1",
+        version: "v1_0",
+        questions: [
+          %{
+            question
+            | id: "question.001-a",
+              responses: [%{response | id: "option_1.a"} | other_responses]
+          }
+          | remaining
+        ]
+    }
+
+    assert :ok == Validator.validate(valid)
+  end
+
+  test "rejects whitespace, control characters and non-ASCII machine identifiers" do
+    methodology = Fixtures.baseline_methodology()
+    [question | remaining] = methodology.questions
+    [response | other_responses] = question.responses
+
+    invalid_methodologies = [
+      %{methodology | id: "research id"},
+      %{methodology | version: "version\n1"},
+      %{methodology | dimensions: ["jaune🟡" | tl(methodology.dimensions)]},
+      %{
+        methodology
+        | questions: [%{question | id: "question\u00a0001"} | remaining]
+      },
+      %{
+        methodology
+        | questions: [
+            %{question | responses: [%{response | id: "option\u200b1"} | other_responses]}
+            | remaining
+          ]
+      }
+    ]
+
+    assert Enum.all?(invalid_methodologies, fn invalid ->
+             :invalid_identifier in (errors_for(invalid) |> Enum.map(& &1.code))
+           end)
+  end
+
   test "rejects duplicate questions, unsupported types and invalid weights" do
     methodology = Fixtures.baseline_methodology()
     [first, second | rest] = methodology.questions

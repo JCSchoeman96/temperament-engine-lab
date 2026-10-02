@@ -3,13 +3,17 @@ defmodule TemperamentEngine.Presentation.Generator do
 
   alias TemperamentEngine.Methodology.Validator
   alias TemperamentEngine.Presentation
+  alias TemperamentEngine.Presentation.Validator, as: PresentationValidator
   alias TemperamentEngine.Question
   alias TemperamentEngine.ValidationError
 
   @doc false
+  @spec generate(term()) :: {:ok, Presentation.t()} | {:error, [ValidationError.t()]}
   def generate(methodology), do: generate(methodology, &Enum.shuffle/1)
 
   @doc false
+  @spec generate(term(), (list() -> term())) ::
+          {:ok, Presentation.t()} | {:error, [ValidationError.t()]}
   def generate(methodology, shuffle_fun) when is_function(shuffle_fun, 1) do
     with :ok <- Validator.validate(methodology) do
       questions = methodology.questions
@@ -23,13 +27,17 @@ defmodule TemperamentEngine.Presentation.Generator do
             {question.id, Enum.map(question.responses, & &1.id)}
         end)
 
-      {:ok,
-       %Presentation{
-         methodology_id: methodology.id,
-         methodology_version: methodology.version,
-         question_order: questions |> Enum.map(& &1.id) |> shuffle_fun.(),
-         response_order: response_order
-       }}
+      presentation = %Presentation{
+        methodology_id: methodology.id,
+        methodology_version: methodology.version,
+        question_order: questions |> Enum.map(& &1.id) |> shuffle_fun.(),
+        response_order: response_order
+      }
+
+      case PresentationValidator.validate(methodology, presentation) do
+        :ok -> {:ok, presentation}
+        {:error, errors} -> {:error, errors}
+      end
     end
   end
 
