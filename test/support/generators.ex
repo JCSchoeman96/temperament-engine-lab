@@ -10,7 +10,7 @@ defmodule TemperamentEngine.Generators do
       dimensions =
         for index <- 1..dimension_count, do: "dimension_#{id_seed}_#{index}"
 
-      bind(integer(1..8), fn question_count ->
+      bind(integer(1..40), fn question_count ->
         bind(list_of(question_data(dimensions), length: question_count), fn question_data ->
           questions =
             question_data

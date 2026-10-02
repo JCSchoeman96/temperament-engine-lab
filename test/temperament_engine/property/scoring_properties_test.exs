@@ -61,7 +61,10 @@ defmodule TemperamentEngine.Property.ScoringPropertiesTest do
       assert {:ok, original_result} = TemperamentEngine.score(methodology, answers)
       assert {:ok, scaled_result} = TemperamentEngine.score(scaled, answers)
 
-      assert ranking_shape(scaled_result.ranking) == ranking_shape(original_result.ranking)
+      assert scaled_result.ranking ==
+               Enum.map(original_result.ranking, fn group ->
+                 %{group | score: group.score * scale}
+               end)
 
       assert scaled_result.ranking_scores ==
                Map.new(original_result.ranking_scores, fn {dimension, score} ->
@@ -225,8 +228,4 @@ defmodule TemperamentEngine.Property.ScoringPropertiesTest do
 
   defp channel_for_type(:forced_choice), do: :forced_choice
   defp channel_for_type(:agreement_scale), do: :agreement_scale
-
-  defp ranking_shape(groups) do
-    Enum.map(groups, fn group -> %{place: group.place, dimensions: group.dimensions} end)
-  end
 end
